@@ -1,6 +1,10 @@
 # Weather_application
 
 LIVE DEMO : https://marutimargale.pythonanywhere.com/
+## 🔁 Application Flow (Image)
+
+![Weather App Flowchart](static/flowchart.png)
+
 
 ## 🔁 Application Flow
 
