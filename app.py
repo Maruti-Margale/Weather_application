@@ -1,89 +1,78 @@
-from flask import Flask, render_template, request
-import requests
-from datetime import datetime
-import pickle
-import os
+import streamlit as st
+import numpy as np
+from sklearn.linear_model import LinearRegression
 
-app = Flask(__name__)
+# --- Data Generation and Model Training (to make the app self-contained) ---
+# In a real-world scenario, this model would be loaded from a pre-trained file.
+# This section ensures the app is fully functional and does not require a .pkl file.
 
-# Replace with your actual API key
-# Warning: Do not use this key in a production environment, as it's publicly visible.
-API_KEY = "abc7e74fada486e88d6b22f5ce803319"
+# Create a simple synthetic dataset for demonstration
+np.random.seed(0)
+# Features: Age, BMI, Smoker (1=Yes, 0=No)
+X = np.array([
+    [25, 22.5, 0],
+    [35, 28.0, 1],
+    [45, 30.2, 1],
+    [55, 25.1, 0],
+    [20, 20.0, 0],
+    [60, 35.0, 1],
+    [30, 29.5, 0],
+    [40, 24.3, 1],
+    [50, 32.1, 0],
+    [28, 26.7, 1]
+])
 
-# Load the trained ML model if it exists
-try:
-    with open('weather_model.pkl', 'rb') as f:
-        ml_model = pickle.load(f)
-    print("Machine learning model loaded successfully.")
-except FileNotFoundError:
-    print("Warning: weather_model.pkl not found. Prediction features will not work.")
-    ml_model = None
+# Target variable (charges) with a linear relationship and some noise
+# Formula: charges = 150 * age + 350 * bmi + 25000 * smoker + random_noise
+y = 150 * X[:, 0] + 350 * X[:, 1] + 25000 * X[:, 2] + np.random.normal(0, 5000, 10)
 
-def get_weather_data(city):
-    """
-    Fetches current weather data for a given city from the OpenWeatherMap API.
-    """
-    base_url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
+# Train a simple Linear Regression model on the synthetic data
+model = LinearRegression()
+model.fit(X, y)
 
-    try:
-        response = requests.get(base_url)
-        response.raise_for_status()
-        data = response.json()
+# --- Streamlit App UI and Logic ---
+# Set up the Streamlit app page configuration
+st.set_page_config(page_title="Insurance Charge Predictor", layout="centered")
 
-        sunrise = datetime.fromtimestamp(data["sys"]["sunrise"]).strftime("%I:%M %p")
-        sunset = datetime.fromtimestamp(data["sys"]["sunset"]).strftime("%I:%M %p")
-        day_length_seconds = data["sys"]["sunset"] - data["sys"]["sunrise"]
-        hours = day_length_seconds // 3600
-        minutes = (day_length_seconds % 3600) // 60
+# App title
+st.title("💰 Insurance Charges Prediction")
 
-        return {
-            "city": data["name"],
-            "temp": round(data["main"]["temp"]),
-            "feels_like": round(data["main"]["feels_like"]),
-            "humidity": data["main"]["humidity"],
-            "description": data["weather"][0]["description"].title(),
-            "icon": data["weather"][0]["icon"],
-            "sunrise": sunrise,
-            "sunset": sunset,
-            "day_length": f"{hours}h {minutes}m",
-            "wind_speed": data["wind"]["speed"],
-            "temp_max": round(data["main"]["temp_max"]),
-            "temp_min": round(data["main"]["temp_min"]),
-            "pressure": data["main"]["pressure"] # Added pressure for potential ML features
-        }
-    except requests.exceptions.RequestException as e:
-        return {"error": f"Failed to connect to weather service: {e}"}
-    except KeyError:
-        return {"error": "City not found!"}
+# Create the navigation menu in the sidebar
+st.sidebar.title("Navigation")
+page = st.sidebar.radio("Go to", ["Predict Charges", "About"])
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    """
-    Renders the main page and handles city search.
-    """
-    city = request.form.get("city") or "Kathmandu"
-    weather = get_weather_data(city)
-    return render_template("index.html", weather=weather)
+# Display content based on the selected page
+if page == "Predict Charges":
+    st.markdown("Predict insurance charges based on Age, BMI, and Smoking status.")
+    st.markdown("This app uses a simple linear regression model for demonstration.")
 
-# Example route for future ML prediction (requires a trained model and a form)
-@app.route("/predict", methods=["POST"])
-def predict():
-    if ml_model is None:
-        return {"error": "Prediction model not available."}, 503
+    # Input fields for user data
+    age = st.slider("Enter Age", min_value=18, max_value=100, value=30)
+    bmi = st.number_input("Enter BMI", min_value=10.0, max_value=50.0, value=25.0, step=0.1)
+    smoker = st.radio("Do you smoke?", ["Yes", "No"])
 
-    try:
-        # Example of getting data from a form
-        input_date_str = request.form.get("prediction_date")
-        input_date = datetime.strptime(input_date_str, "%Y-%m-%d")
-        
-        # You would need to get all features your model was trained on
-        # This is a placeholder; in a real app, you would need more data
-        features = [[input_date.month, input_date.day]] 
-        
-        predicted_temp = round(ml_model.predict(features)[0])
-        return {"predicted_temp": predicted_temp}
-    except Exception as e:
-        return {"error": f"Prediction failed: {e}"}, 400
+    # Convert smoker status to the binary format the model expects
+    smoker_val = 1 if smoker == "Yes" else 0
 
-if __name__ == "__main__":
-    app.run(debug=True)
+    # Predict button
+    if st.button("Predict Charges", use_container_width=True):
+        # Prepare the input data as a NumPy array with the correct shape
+        input_data = np.array([[age, bmi, smoker_val]])
+
+        # Make the prediction using the trained model
+        prediction = model.predict(input_data)[0]
+
+        # Display the formatted result
+        st.success(f"💵 Predicted Insurance Charges: ${prediction:,.2f}")
+
+elif page == "About":
+    st.header("About This Application")
+    st.markdown("""
+    This is a simple demo application that predicts insurance charges using a basic machine learning model.
+    The model is a **Linear Regression** model trained on a synthetic dataset. It considers three main factors:
+    - **Age**: The user's age.
+    - **BMI**: Body Mass Index, a measure of body fat.
+    - **Smoking Status**: Whether the user is a smoker or not.
+
+    **Disclaimer:** This is for demonstration purposes only and should not be used for actual financial or health advice.
+    """)
