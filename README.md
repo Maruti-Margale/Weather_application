@@ -2,16 +2,18 @@
 
 LIVE DEMO ; https://marutimargale.pythonanywhere.com/
 
+## 🔁 Application Flow
+
+The following flowchart shows how the weather application works behind the scenes:
+
 ```mermaid
 graph TD
-    A[Start: User visits app] --> B[Flask (app.py) receives request]
-    B --> C[Weather API call using OpenWeatherMap]
+    A[User visits app] --> B[Flask app receives request]
+    B --> C[Call OpenWeatherMap API]
     C --> D[Parse API response (JSON)]
-    D --> E[Send data to HTML template (index.html)]
-    E --> F[Render with Jinja2: show weather info]
-    F --> G[Display styled page using CSS (style.css)]
-    G --> H[User sees result on browser]
+    D --> E[Send data to HTML template]
+    E --> F[Render template using Jinja2]
+    F --> G[Apply CSS for styling]
+    G --> H[User sees weather information]
     H --> I[End]
-
-...diagram code here...
 ```
