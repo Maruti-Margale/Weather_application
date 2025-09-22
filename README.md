@@ -1,6 +1,6 @@
 # Weather_application
 
-LIVE DEMO ; https://marutimargale.pythonanywhere.com/
+LIVE DEMO : https://marutimargale.pythonanywhere.com/
 
 ## 🔁 Application Flow
 
