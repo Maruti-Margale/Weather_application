@@ -8,12 +8,12 @@ The following flowchart shows how the weather application works behind the scene
 
 ```mermaid
 graph TD
-    A[User visits app] --> B[Flask app receives request]
-    B --> C[Call OpenWeatherMap API]
-    C --> D[Parse API response (JSON)]
-    D --> E[Send data to HTML template]
-    E --> F[Render template using Jinja2]
-    F --> G[Apply CSS for styling]
-    G --> H[User sees weather information]
-    H --> I[End]
+    A[User opens app] --> B[Flask app handles request]
+    B --> C[Send city name to weather API]
+    C --> D[Receive weather data]
+    D --> E[Extract temperature, humidity, etc]
+    E --> F[Send data to HTML template]
+    F --> G[Render web page with data]
+    G --> H[Display weather info to user]
 ```
+
